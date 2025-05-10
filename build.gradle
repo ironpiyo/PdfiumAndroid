@@ -23,6 +23,8 @@ android {
     
     namespace 'com.shockwave.pdfium'
     
+    archivesBaseName = 'pdfium-android'
+    
     buildTypes {
         release {
             minifyEnabled false
