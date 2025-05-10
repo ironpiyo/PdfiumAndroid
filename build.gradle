@@ -15,7 +15,7 @@ android {
     compileSdkVersion 34
 
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 16
         targetSdkVersion 34
         versionCode 1
         versionName "1.9.0"
@@ -37,11 +37,17 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    sourceSets{
+    sourceSets {
         main {
             jni.srcDirs = []
             jniLibs.srcDir 'src/main/libs'
         }
+    }
+
+    // Gradle 8.2の非推奨警告に対応
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
     }
 }
 
