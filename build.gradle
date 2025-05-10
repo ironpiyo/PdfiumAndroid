@@ -13,6 +13,8 @@ apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 35
+    archivesBaseName = 'pdfium-android'
+    namespace 'com.shockwave.pdfium'
 
     defaultConfig {
         minSdkVersion 16
@@ -25,12 +27,6 @@ android {
         }
 
         ndkVersion "29.0.13113456"
-    }
-    
-    namespace 'com.shockwave.pdfium'
-    
-    tasks.withType(Jar) {
-        archiveBaseName = 'pdfium-android'
     }
     
     buildTypes {
