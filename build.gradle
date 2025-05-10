@@ -21,7 +21,7 @@ android {
         versionName "1.9.0"
     }
     
-    namespace 'com.github.barteksc.pdfium'
+    namespace 'com.shockwave.pdfium'
     
     buildTypes {
         release {
