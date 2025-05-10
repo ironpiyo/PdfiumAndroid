@@ -17,7 +17,7 @@ android {
     namespace 'com.shockwave.pdfium'
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 21
         targetSdkVersion 35
         versionCode 1
         versionName "1.9.0"
@@ -26,7 +26,16 @@ android {
             abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }
 
+        buildConfigField 'String', 'VERSION_NAME', "\"${defaultConfig.versionName}\""
+
         ndkVersion "29.0.13113456"
+    
+
+        externalNativeBuild {
+            cmake {
+                cppFlags ""
+            }
+        }
     }
     
     buildTypes {
@@ -41,10 +50,20 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
     sourceSets {
         main {
-            jni.srcDirs = []
-            jniLibs.srcDir 'src/main/libs'
+            jniLibs.srcDirs = ['src/main/jni/lib']
         }
     }
 }

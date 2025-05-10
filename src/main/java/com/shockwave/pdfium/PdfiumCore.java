@@ -23,7 +23,6 @@ public class PdfiumCore {
 
     static {
         try {
-            System.loadLibrary("c++_shared");
             System.loadLibrary("modpdfium");
             System.loadLibrary("jniPdfium");
         } catch (UnsatisfiedLinkError e) {

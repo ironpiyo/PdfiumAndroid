@@ -8,3 +8,6 @@ src/main/obj
 .DS_Store
 /build
 /captures
+
+# CMake/NDKビルド生成物
+.cxx/
