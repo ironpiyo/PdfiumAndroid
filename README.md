@@ -43,7 +43,7 @@ allprojects {
 Add the dependency:
 ```gradle
 dependencies {
-    implementation 'com.github.your-username:PdfiumAndroid:Tag'
+    implementation 'com.github.ironpiyo:PdfiumAndroid:Tag'
 }
 ```
 

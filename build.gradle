@@ -104,7 +104,7 @@ afterEvaluate {
         publications {
             release(MavenPublication) {
                 from components.release
-                groupId = 'com.github.your-username'
+                groupId = 'com.github.ironpiyo'
                 artifactId = 'PdfiumAndroid'
                 version = android.defaultConfig.versionName
             }
