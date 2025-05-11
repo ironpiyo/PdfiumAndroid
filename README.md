@@ -30,9 +30,29 @@ This repository provides pre-compiled binaries of PDFium for various platforms, 
 * Add support for mips64
 
 ## Installation
-Add to _build.gradle_:
+### JitPack
+Add JitPack repository to your project's `build.gradle`:
+```gradle
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
 
-`compile 'com.github.barteksc:pdfium-android:1.9.0'`
+Add the dependency:
+```gradle
+dependencies {
+    implementation 'com.github.your-username:PdfiumAndroid:Tag'
+}
+```
+
+### Maven Central (旧バージョン)
+Add to _build.gradle_:
+```gradle
+compile 'com.github.barteksc:pdfium-android:1.9.0'
+```
 
 Library is available in jcenter and Maven Central repositories.
 
