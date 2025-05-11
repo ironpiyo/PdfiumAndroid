@@ -11,7 +11,7 @@
 #
 # ビルド成果物：
 # - libjniPdfium.so: JNIラッパーライブラリ
-# - libmodpdfium.so: PDFiumのコアライブラリ（コピーされる）
+# - libmodpdfium.so: PDFiumのコアライブラリ
 
 # CMakeの最小バージョン要求
 # Android NDKの要件に合わせて設定
@@ -22,11 +22,6 @@ cmake_minimum_required(VERSION 3.4.1)
 # この名前は、ビルドシステムで使用される識別子として機能
 # プロジェクト内で一意である必要がある
 project(PdfiumAndroid)
-
-# Prebuilt library
-add_library(aospPdfium SHARED IMPORTED)
-set_target_properties(aospPdfium PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jni/lib/${ANDROID_ABI}/libmodpdfium.so)
 
 # Main JNI library
 add_library(jniPdfium SHARED
@@ -71,20 +66,7 @@ set_target_properties(jniPdfium PROPERTIES
 #  - AndroidBitmapなどのグラフィックス処理機能を提供
 #  - 画像処理や表示に使用
 target_link_libraries(jniPdfium
-    aospPdfium
+    ${CMAKE_CURRENT_SOURCE_DIR}/../jni/lib/${ANDROID_ABI}/libmodpdfium.so
     log
     android
-    jnigraphics)
-
-# ビルド後の処理
-# POST_BUILD: ライブラリのビルド完了後に実行されるコマンド
-# ${CMAKE_COMMAND} -E copy: CMakeのコピーコマンド
-#  - プラットフォームに依存しないファイル操作
-# libmodpdfium.soを出力ディレクトリにコピー
-#  - ${CMAKE_CURRENT_SOURCE_DIR}/../jni/lib/${ANDROID_ABI}/libmodpdfium.so: コピー元
-#  - $<TARGET_FILE_DIR:jniPdfium>/libmodpdfium.so: コピー先
-#  - ${ANDROID_ABI}: 現在ビルド中のCPUアーキテクチャ（arm64-v8a, armeabi-v7a, x86, x86_64）
-add_custom_command(TARGET jniPdfium POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_CURRENT_SOURCE_DIR}/../jni/lib/${ANDROID_ABI}/libmodpdfium.so
-        $<TARGET_FILE_DIR:jniPdfium>/libmodpdfium.so) 
+    jnigraphics) 
