@@ -22,20 +22,28 @@ android {
         versionCode 1
         versionName "1.9.0"
 
+        // NDKの設定
         ndk {
+            // サポートするCPUアーキテクチャ
+            // armeabi-v7a: 32ビットARM
+            // arm64-v8a: 64ビットARM
+            // x86: 32ビットIntel
+            // x86_64: 64ビットIntel
             abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }
 
-        buildConfigField 'String', 'VERSION_NAME', "\"${defaultConfig.versionName}\""
-
+        // NDKのバージョン指定
         ndkVersion "29.0.13113456"
-    
 
+        // CMakeの設定
         externalNativeBuild {
             cmake {
+                // C++コンパイラフラグ（必要に応じて追加）
                 cppFlags ""
             }
         }
+
+        buildConfigField 'String', 'VERSION_NAME', "\"${defaultConfig.versionName}\""
     }
     
     buildTypes {
@@ -50,9 +58,12 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
+    // CMakeのビルド設定
     externalNativeBuild {
         cmake {
+            // CMakeLists.txtの場所
             path "src/main/cpp/CMakeLists.txt"
+            // CMakeのバージョン
             version "3.22.1"
         }
     }
@@ -61,8 +72,10 @@ android {
         buildConfig true
     }
 
+    // ネイティブライブラリのソースディレクトリ設定
     sourceSets {
         main {
+            // プリビルドされた.soファイルの場所
             jniLibs.srcDirs = ['src/main/jni/lib']
         }
     }
