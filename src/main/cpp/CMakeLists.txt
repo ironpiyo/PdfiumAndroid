@@ -43,16 +43,6 @@ target_include_directories(jniPdfium PRIVATE
 # PRIVATE: このターゲットのみに適用される定義
 target_compile_definitions(jniPdfium PRIVATE HAVE_PTHREADS)
 
-# リンカーフラグの設定
-# -Wl: リンカーに渡すオプション
-# -z,max-page-size=16384: メモリページサイズの最大値を設定
-#  - PDFiumの要件に基づく設定
-#  - メモリ管理の最適化に影響
-# -z,common-page-size=16384: 共通ページサイズを設定
-#  - メモリアラインメントの最適化
-set_target_properties(jniPdfium PROPERTIES
-    LINK_FLAGS "-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384")
-
 # リンクするライブラリの設定
 # libmodpdfium.so: PDFiumのネイティブライブラリ
 #  - PDFの解析と表示のためのコア機能を提供
