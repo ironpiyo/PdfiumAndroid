@@ -7,6 +7,20 @@ Forked for use with [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfVie
 
 API is highly compatible with original version, only additional methods were created.
 
+## PDFium Binary and Headers
+The PDFium binary (`libmodpdfium.so`) and header files are obtained from [bblanchon/pdfium-binaries](https://github.com/bblanchon/pdfium-binaries).
+This repository provides pre-compiled binaries of PDFium for various platforms, including Android.
+
+### Binary Location
+- Binary: `src/main/jni/lib/${ANDROID_ABI}/libmodpdfium.so`
+- Headers: `src/main/jni/include/`
+
+### Supported ABIs
+- arm64-v8a
+- armeabi-v7a
+- x86
+- x86_64
+
 ## What's new in 1.9.0?
 * Updated Pdfium library to 7.1.2_r36
 * Changed `gnustl_static` to `c++_shared`
@@ -21,6 +35,40 @@ Add to _build.gradle_:
 `compile 'com.github.barteksc:pdfium-android:1.9.0'`
 
 Library is available in jcenter and Maven Central repositories.
+
+## Build
+### Requirements
+- Android Studio
+- Android NDK (version 29 or higher)
+- CMake (version 3.4.1 or higher)
+
+### Build Steps
+1. Clone the repository:
+```bash
+git clone {$thisGitUrl}
+cd PdfiumAndroid
+```
+
+2. Build the project:
+```bash
+# Clean build
+./gradlew clean
+
+# Build debug version
+./gradlew assembleDebug
+
+# Build release version
+./gradlew assembleRelease
+```
+
+The built AAR file will be located at:
+- Debug: `build/outputs/aar/pdfium-android-debug.aar`
+- Release: `build/outputs/aar/pdfium-android-release.aar`
+
+### Build Configuration
+The project uses CMake for native library building. The main configuration files are:
+- `src/main/cpp/CMakeLists.txt`: Native library build configuration
+- `build.gradle`: Android project configuration
 
 ## Methods inconsistency
 Version 1.8.0 added method for getting page size - `PdfiumCore#getPageSize(...)`.
