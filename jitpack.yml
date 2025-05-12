@@ -1,12 +1,2 @@
 jdk:
   - openjdk17
-
-android:
-  components:
-    - build-tools;35.0.0
-    - platforms;android-35
-    - ndk;29.0.13113456
-
-before_install:
-  - echo "NDK path: $ANDROID_NDK"
-  - cat $ANDROID_NDK/source.properties | grep Pkg.Revision
