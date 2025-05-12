@@ -8,4 +8,4 @@ android:
     - ndk;29.0.13113456
 
 before_install:
-  - yes | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;35.0.0"
+  - yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;35.0.0"
