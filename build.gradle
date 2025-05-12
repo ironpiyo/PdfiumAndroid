@@ -9,8 +9,12 @@ buildscript {
     }
 }
 
+plugins {
+    id 'maven-publish'
+}
+
+
 apply plugin: 'com.android.library'
-apply plugin: 'maven-publish'
 
 android {
     compileSdk 35
