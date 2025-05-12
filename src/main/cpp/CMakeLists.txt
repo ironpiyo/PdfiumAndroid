@@ -27,6 +27,9 @@ project(PdfiumAndroid)
 add_library(jniPdfium SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/../jni/src/mainJNILib.cpp)
 
+# リンカーオプションの追加(16KB)
+target_link_options(jniPdfium PRIVATE "-Wl,-z,max-page-size=16384")
+
 # インクルードディレクトリの設定
 # PRIVATE: このターゲットのみが使用するインクルードパス
 #  - 他のターゲットには公開されない
