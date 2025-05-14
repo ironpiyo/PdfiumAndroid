@@ -70,7 +70,7 @@ jobs:
               target_cpu="'$ARCH'"
               is_debug=false
               pdf_is_standalone=true
-              is_component_build=false
+              is_component_build=true
               pdf_enable_v8=false
               pdf_enable_xfa=false
               use_goma=false
