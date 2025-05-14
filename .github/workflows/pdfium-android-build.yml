@@ -79,7 +79,7 @@ jobs:
             '
 
             echo "🛠 Running ninja build for $ARCH..."
-            ninja -C "$BUILD_DIR" pdfium_shared
+            ninja -C "$BUILD_DIR" pdfium
 
             echo "📦 Zipping libpdfium.so for $ARCH..."
             zip -j "$BUILD_DIR/libpdfium-android-${ARCH}.zip" "$BUILD_DIR/libpdfium.so"
