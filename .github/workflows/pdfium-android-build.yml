@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 40
 
-    env:ssssss
+    env:
       BUILD_ARCHS: "arm arm64 x86 x64"
 
     steps:
