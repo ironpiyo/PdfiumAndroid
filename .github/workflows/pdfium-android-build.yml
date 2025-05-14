@@ -30,7 +30,6 @@ jobs:
           echo "✅ depot_tools added to PATH."
 
       - name: Setup Android NDK
-        if: inputs.method == 'android'
         id: setup-ndk
         uses: nttld/setup-ndk@main
         with:
