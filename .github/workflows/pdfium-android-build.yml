@@ -29,10 +29,12 @@ jobs:
           echo "$GITHUB_WORKSPACE/depot_tools" >> $GITHUB_PATH
           echo "✅ depot_tools added to PATH."
 
-      - name: ⚙️ Setup ANDROID_NDK (v29)
-        uses: nttld/setup-ndk@v1
+      - name: Setup Android NDK
+        if: inputs.method == 'android'
+        id: setup-ndk
+        uses: nttld/setup-ndk@main
         with:
-          ndk-version: ${{ env.ANDROID_NDK_VERSION }}
+          ndk-version: r29-beta1
 
       - name: 📁 Fetch PDFium source
         run: |
