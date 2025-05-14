@@ -38,7 +38,15 @@ jobs:
           gclient config --unmanaged https://pdfium.googlesource.com/pdfium.git@$GITHASH
           echo 'target_os = ["android"]' >> .gclient
           gclient sync
-          cd pdfium
+
+      - name: 🧹 Patch DEPS to avoid mac_toolchain.py error
+        run: |
+          cd pdfium-src/pdfium
+          sed -i '/mac_toolchain.py/d' DEPS
+
+      - name: 📥 Install build dependencies and runhooks
+        run: |
+          cd pdfium-src/pdfium
           ./build/install-build-deps.sh
           gclient runhooks
 
