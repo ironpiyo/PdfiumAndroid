@@ -73,7 +73,6 @@ jobs:
               is_component_build=true
               pdf_enable_v8=false
               pdf_enable_xfa=false
-              use_goma=false
               symbol_level=0
               use_custom_libcxx=true
             '
