@@ -1,60 +1,125 @@
-name: Build Pdfium for Android
+name: Build PDFium for Android (Pinned Commit)
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
 
     env:
-      DEPOT_TOOLS_DIR: ${{ github.workspace }}/depot_tools
-      ANDROID_NDK_ROOT: ${{ github.workspace }}/android-ndk-r23b
+      GITHASH: daabea6ba6c09f72e956e826b132f1d1b77acb9b
+      BUILD_ARCHS: "arm arm64 x86 x64"
 
     steps:
-      - name: Checkout (empty repo to use Actions)
+      - name: 🔄 Checkout this repo
         uses: actions/checkout@v3
 
-      - name: Install dependencies
+      - name: 📢 Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git python3 python-is-python3 build-essential curl unzip
+          sudo apt-get install -y git curl python3 python3-pip unzip zip openjdk-11-jdk \
+              ninja-build build-essential pkg-config libglib2.0-dev libatspi2.0-dev
 
-      - name: Clone depot_tools
+      - name: ⬇️ Clone depot_tools
         run: |
-          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git $DEPOT_TOOLS_DIR
-          echo "$DEPOT_TOOLS_DIR" >> $GITHUB_PATH
+          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+          echo "$GITHUB_WORKSPACE/depot_tools" >> $GITHUB_PATH
 
-      - name: Fetch Pdfium
+      - name: ☁️ Setup Android NDK
+        uses: nttld/setup-ndk@main
+        with:
+          ndk-version: r29-beta1
+
+      - name: 📁 gclient setup and sync (pinned commit)
         run: |
-          mkdir pdfium && cd pdfium
-          fetch pdfium
+          mkdir -p pdfium-src && cd pdfium-src
+          gclient config --unmanaged https://pdfium.googlesource.com/pdfium.git@$GITHASH
+          echo 'target_os = ["android"]' >> .gclient
           gclient sync
-
-      - name: Download Android NDK
-        run: |
-          cd ${{ github.workspace }}
-          curl -O https://dl.google.com/android/repository/android-ndk-r23b-linux.zip
-          unzip android-ndk-r23b-linux.zip
-
-      - name: Generate build files (arm64)
-        run: |
           cd pdfium
-          gn gen out/android-arm64 --args='
-            target_os="android"
-            target_cpu="arm64"
-            is_debug=false
-            android_ndk_root="${ANDROID_NDK_ROOT}"
-            android_ndk_version="r23b"
-          '
+          ./build/install-build-deps.sh
+          gclient runhooks
 
-      - name: Build Pdfium
+      - name: 🛠 Patch BUILD.gn for "FPDFSDK_EXPORTS"
         run: |
-          cd pdfium
-          ninja -C out/android-arm64 pdfium
+          cd pdfium-src/pdfium
+          tmpfile=$(mktemp)
+          sed '/.*"PNG_USE_READ_MACROS",.*/a          "FPDFSDK_EXPORTS",' BUILD.gn | uniq > $tmpfile
+          mv $tmpfile BUILD.gn
 
-      - name: Archive output
+      - name: 🔧 Build PDFium for all ABIs (pinned hash)
+        run: |
+          cd pdfium-src/pdfium
+          for ARCH in $BUILD_ARCHS; do
+            echo "🚀 Building for ABI: $ARCH"
+            BUILD_DIR="out/android_${ARCH}_release"
+            mkdir -p "$BUILD_DIR"
+
+            gn gen "$BUILD_DIR" --args='
+              target_os="android"
+              target_cpu="'$ARCH'"
+              is_debug=false
+              pdf_is_standalone=true
+              is_component_build=true
+              pdf_enable_v8=false
+              pdf_enable_xfa=false
+              symbol_level=1
+              pdf_use_skia=false
+              is_clang=true
+              use_custom_libcxx=false
+            '
+
+            ninja -C "$BUILD_DIR" pdfium
+
+            zip -j "$BUILD_DIR/libpdfium-android-${ARCH}.zip" "$BUILD_DIR/libpdfium.cr.so" || true
+          done
+
+      - name: ✅ Validate libpdfium.cr.so existence
+        run: |
+          for ARCH in $BUILD_ARCHS; do
+            FILE="pdfium-src/pdfium/out/android_${ARCH}_release/libpdfium.cr.so"
+            if [ -f "$FILE" ]; then
+              echo "✅ Found: $FILE"
+            else
+              echo "❌ Missing: $FILE"
+              exit 1
+            fi
+          done
+
+      - name: 📦 Collect all ABIs into single zip
+        run: |
+          mkdir -p bundled-libs
+          for ARCH in $BUILD_ARCHS; do
+            case "$ARCH" in
+              arm) ABI="armeabi-v7a" ;;
+              arm64) ABI="arm64-v8a" ;;
+              x86) ABI="x86" ;;
+              x64) ABI="x86_64" ;;
+            esac
+            mkdir -p bundled-libs/$ABI
+            cp "pdfium-src/pdfium/out/android_${ARCH}_release/libpdfium.cr.so" "bundled-libs/$ABI/libpdfium.so"
+          done
+          zip -r libpdfium-android-all.zip bundled-libs
+
+      - name: ☁️ Upload bundled libpdfium
         uses: actions/upload-artifact@v4
         with:
-          name: libpdfium-android-arm64
-          path: pdfium/out/android-arm64/libpdfium.so
+          name: libpdfium-android-all
+          path: libpdfium-android-all.zip
+
+      - name: 📁 Collect public headers
+        run: |
+          mkdir -p headers
+          cp -r pdfium-src/pdfium/public/* headers/
+
+      - name: 📦 Zip headers
+        run: |
+          zip -r pdfium-public-headers.zip headers
+
+      - name: ☁️ Upload headers
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdfium-public-headers
+          path: pdfium-public-headers.zip
