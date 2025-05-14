@@ -80,7 +80,7 @@ jobs:
             '
 
             echo "🛠 Running ninja build for $ARCH..."
-            ninja -C "$BUILD_DIR" pdfium
+            ninja -C "$BUILD_DIR" modpdfium
 
             echo "📂 ビルドディレクトリの中身:"
             ls -al "$BUILD_DIR"
