@@ -1,0 +1,86 @@
+name: Build PDFium for Android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+
+    env:
+      ANDROID_NDK_VERSION: 29.0.13113456
+
+    steps:
+      - name: 🔄 Checkout PDFium repo
+        uses: actions/checkout@v3
+
+      - name: 📢 Install system dependencies
+        run: |
+          echo "📦 Installing build tools..."
+          sudo apt-get update
+          sudo apt-get install -y git curl python3 python3-pip unzip openjdk-11-jdk \
+              ninja-build build-essential pkg-config libglib2.0-dev
+
+      - name: ⬇️ Clone depot_tools
+        run: |
+          echo "⬇️ Cloning depot_tools..."
+          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+          echo "$GITHUB_WORKSPACE/depot_tools" >> $GITHUB_PATH
+          echo "✅ depot_tools added to PATH."
+
+      - name: ⚙️ Setup ANDROID_NDK (v29)
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: ${{ env.ANDROID_NDK_VERSION }}
+
+      - name: 📁 Fetch PDFium source
+        run: |
+          echo "📥 Fetching PDFium..."
+          fetch --nohooks pdfium
+          cd pdfium
+          git checkout main
+          echo "✅ Fetched and checked out main branch."
+
+      - name: 📝 Configure gclient for Android
+        run: |
+          echo "🛠 Writing target_os to .gclient..."
+          echo 'target_os = ["android"]' >> .gclient
+          cd pdfium
+          echo "🔄 Syncing dependencies with gclient..."
+          gclient sync
+          echo "✅ gclient sync complete."
+
+      - name: 🔨 Generate build config (GN)
+        run: |
+          echo "📐 Configuring GN for Android (arm64)..."
+          cd pdfium
+          BUILD_DIR=out/android_arm64_release
+          gn gen $BUILD_DIR --args='
+            target_os="android"
+            target_cpu="arm64"
+            is_debug=false
+            pdf_is_standalone=true
+            is_component_build=false
+            pdf_enable_v8=false
+            pdf_enable_xfa=false
+            use_goma=false
+            symbol_level=0
+            strip_debug_info=false
+            use_sysroot=true
+            use_custom_libcxx=false
+          '
+          echo "✅ GN configuration complete: $BUILD_DIR"
+
+      - name: 🚀 Build PDFium (ninja)
+        run: |
+          echo "🔧 Starting ninja build..."
+          cd pdfium
+          ninja -C out/android_arm64_release pdfium
+          echo "✅ PDFium build complete."
+
+      - name: 📤 Upload libpdfium.so
+        uses: actions/upload-artifact@v3
+        with:
+          name: libpdfium-arm64
+          path: pdfium/out/android_arm64_release/libpdfium.so
