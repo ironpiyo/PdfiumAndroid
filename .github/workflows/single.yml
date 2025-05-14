@@ -32,17 +32,28 @@ jobs:
         with:
           ndk-version: r29-beta1
 
-      - name: 📁 gclient setup and sync (pinned commit)
+      - name: 📁 gclient setup (pinned commit)
         run: |
           mkdir -p pdfium-src && cd pdfium-src
           gclient config --unmanaged https://pdfium.googlesource.com/pdfium.git@$GITHASH
           echo 'target_os = ["android"]' >> .gclient
-          gclient sync
 
-      - name: 🧹 Patch DEPS to avoid mac_toolchain.py error
+      - name: ⬇️ Clone pdfium without sync
+        run: |
+          cd pdfium-src
+          git clone https://pdfium.googlesource.com/pdfium.git pdfium
+          cd pdfium
+          git checkout $GITHASH
+
+      - name: 🧹 Patch DEPS before sync
         run: |
           cd pdfium-src/pdfium
           sed -i '/mac_toolchain.py/d' DEPS
+
+      - name: 🔄 gclient sync (after patch)
+        run: |
+          cd pdfium-src
+          gclient sync
 
       - name: 📥 Install build dependencies and runhooks
         run: |
