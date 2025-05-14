@@ -62,7 +62,7 @@ jobs:
             target_cpu="arm64"
             is_debug=false
             pdf_is_standalone=true
-            is_component_build=false
+            is_component_build=true
             pdf_enable_v8=false
             pdf_enable_xfa=false
             use_goma=false
@@ -79,6 +79,12 @@ jobs:
           cd pdfium
           ninja -C out/android_arm64_release pdfium
           echo "✅ Build finished."
+
+      - name: 📂 List build output directory
+        run: |
+          echo "📂 Listing contents of out/android_arm64_release..."
+          cd pdfium/out/android_arm64_release
+          ls -lh
 
       - name: 📦 Zip libpdfium.so
         run: |
