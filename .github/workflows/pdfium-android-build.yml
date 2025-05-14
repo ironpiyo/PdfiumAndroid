@@ -69,7 +69,7 @@ jobs:
             symbol_level=0
             strip_debug_info=false
             use_sysroot=true
-            use_custom_libcxx=false
+            use_custom_libcxx=true
           '
           echo "✅ GN configuration done."
 
