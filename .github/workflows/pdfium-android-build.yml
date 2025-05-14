@@ -74,7 +74,9 @@ jobs:
               pdf_enable_v8=false
               pdf_enable_xfa=false
               symbol_level=0
-              use_custom_libcxx=true
+              pdf_use_skia=false
+              is_clang=true
+              use_custom_libcxx=false
             '
 
             echo "🛠 Running ninja build for $ARCH..."
