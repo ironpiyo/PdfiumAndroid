@@ -1,4 +1,4 @@
-name: Build PDFium for Android
+name: Build PDFium for Android (all ABIs with verbose logs)
 
 on:
   workflow_dispatch:
@@ -12,22 +12,23 @@ jobs:
       ANDROID_NDK_VERSION: 29.0.13113456
 
     steps:
-      - name: 🔄 Checkout PDFium repo
+      - name: 🔄 Checkout this repo
         uses: actions/checkout@v3
 
       - name: 📢 Install system dependencies
         run: |
-          echo "📦 Installing build tools..."
+          echo "📦 Installing system packages..."
           sudo apt-get update
           sudo apt-get install -y git curl python3 python3-pip unzip zip openjdk-11-jdk \
               ninja-build build-essential pkg-config libglib2.0-dev
+          echo "✅ System dependencies installed."
 
       - name: ⬇️ Clone depot_tools
         run: |
           echo "⬇️ Cloning depot_tools..."
           git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
           echo "$GITHUB_WORKSPACE/depot_tools" >> $GITHUB_PATH
-          echo "✅ depot_tools added to PATH."
+          echo "✅ depot_tools path added to PATH."
 
       - name: ☁️ Setup Android NDK
         id: setup-ndk
@@ -37,71 +38,79 @@ jobs:
 
       - name: 📁 Fetch PDFium source
         run: |
-          echo "📥 Fetching PDFium..."
+          echo "📥 Fetching PDFium repository..."
           fetch --nohooks pdfium
           cd pdfium
           git checkout main
-          echo "✅ Checked out PDFium main branch."
+          echo "✅ Checked out 'main' branch of PDFium."
 
       - name: 📝 Configure gclient for Android
         run: |
-          echo "🛠 Writing target_os to .gclient..."
+          echo "🛠 Writing 'target_os = [\"android\"]' to .gclient..."
           echo 'target_os = ["android"]' >> .gclient
           cd pdfium
           echo "🔄 Running gclient sync..."
           gclient sync
           echo "✅ gclient sync complete."
 
-      - name: 🔨 Generate build config (GN)
+      - name: 🔨 Build for all Android ABIs
         run: |
-          echo "📐 Generating GN config..."
-          cd pdfium
-          BUILD_DIR=out/android_arm64_release
-          gn gen $BUILD_DIR --args='
-            target_os="android"
-            target_cpu="arm64"
-            is_debug=false
-            pdf_is_standalone=true
-            is_component_build=true
-            pdf_enable_v8=false
-            pdf_enable_xfa=false
-            use_goma=false
-            symbol_level=0
-            use_custom_libcxx=true
-          '
-          echo "✅ GN configuration done."
+          set -e
+          echo "🔧 Starting build for all ABIs..."
+          BUILD_ARCHS=("arm" "arm64" "x86" "x64")
 
-      - name: 🚀 Build PDFium (ninja)
-        run: |
-          echo "🔧 Building PDFium..."
-          cd pdfium
-          ninja -C out/android_arm64_release pdfium
-          echo "✅ Build finished."
+          for ARCH in "${BUILD_ARCHS[@]}"; do
+            echo "----------------------------------------"
+            echo "🚀 Building for ABI: $ARCH"
 
-      - name: 📁 Rename .so output
-        run: |
-          echo "🔧 Renaming libpdfium.cr.so to libpdfium.so..."
-          cp pdfium/out/android_arm64_release/libpdfium.cr.so pdfium/out/android_arm64_release/libpdfium.so
+            BUILD_DIR="pdfium/out/android_${ARCH}_release"
+            mkdir -p "$BUILD_DIR"
+            echo "📁 Created build directory: $BUILD_DIR"
 
-      - name: 📦 Zip libpdfium.so
-        run: |
-          echo "📦 Zipping libpdfium.so..."
-          cd pdfium/out/android_arm64_release
-          zip libpdfium-android-arm64.zip libpdfium.so
-          echo "✅ Created libpdfium-android-arm64.zip."
+            echo "⚙️ Generating GN config for $ARCH..."
+            gn gen "$BUILD_DIR" --args="
+              target_os=\"android\"
+              target_cpu=\"$ARCH\"
+              is_debug=false
+              pdf_is_standalone=true
+              is_component_build=true
+              pdf_enable_v8=false
+              pdf_enable_xfa=false
+              use_goma=false
+              symbol_level=0
+              use_custom_libcxx=true
+            "
+            echo "✅ GN generation complete for $ARCH."
 
-      - name: ☁️ Upload libpdfium artifact
+            echo "🛠 Running ninja build for $ARCH..."
+            ninja -C "$BUILD_DIR" pdfium
+            echo "✅ Build finished for $ARCH."
+
+            echo "📁 Renaming libpdfium.cr.so to libpdfium.so..."
+            cp "$BUILD_DIR/libpdfium.cr.so" "$BUILD_DIR/libpdfium.so"
+
+            echo "📦 Zipping libpdfium.so for $ARCH..."
+            zip -j "$BUILD_DIR/libpdfium-android-${ARCH}.zip" "$BUILD_DIR/libpdfium.so"
+            echo "✅ Zipped libpdfium for $ARCH."
+          done
+          echo "🎉 All ABI builds complete!"
+
+      - name: ☁️ Upload all libpdfium artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: libpdfium-android-arm64
-          path: pdfium/out/android_arm64_release/libpdfium-android-arm64.zip
+          name: libpdfium-android-all
+          path: |
+            pdfium/out/android_arm_release/libpdfium-android-arm.zip
+            pdfium/out/android_arm64_release/libpdfium-android-arm64.zip
+            pdfium/out/android_x86_release/libpdfium-android-x86.zip
+            pdfium/out/android_x64_release/libpdfium-android-x64.zip
 
       - name: 📁 Collect public headers
         run: |
           echo "📥 Collecting public headers from pdfium/public/..."
           mkdir -p headers
           cp -r pdfium/public/* headers/
-          echo "✅ Copied headers to ./headers/"
+          echo "✅ Copied headers to ./headers"
 
       - name: 📦 Zip headers
         run: |
