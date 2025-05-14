@@ -84,9 +84,10 @@ jobs:
             echo "📂 ビルドディレクトリの中身:"
             ls -al "$BUILD_DIR"
 
-            if [ ! -f "$BUILD_DIR/libpdfium.so" ]; then
-              echo "❌ ビルド失敗: $BUILD_DIR/libpdfium.so が存在しません"
-              exit 1
+            if [ -f "$BUILD_DIR/libpdfium.cr.so" ]; then
+              echo "🔄 Renaming libpdfium.cr.so to libpdfium.so..."
+              cp "$BUILD_DIR/libpdfium.cr.so" "$BUILD_DIR/libpdfium.so"
+              echo "✅ Renamed successfully."
             fi
 
             echo "📦 Zipping libpdfium.so for $ARCH..."
