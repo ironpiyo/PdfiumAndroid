@@ -29,7 +29,7 @@ jobs:
           echo "$GITHUB_WORKSPACE/depot_tools" >> $GITHUB_PATH
           echo "✅ depot_tools added to PATH."
 
-      - name: Setup Android NDK
+      - name: ☁️ Setup Android NDK
         id: setup-ndk
         uses: nttld/setup-ndk@main
         with:
@@ -67,8 +67,6 @@ jobs:
             pdf_enable_xfa=false
             use_goma=false
             symbol_level=0
-            strip_debug_info=false
-            use_sysroot=true
             use_custom_libcxx=true
           '
           echo "✅ GN configuration done."
@@ -80,11 +78,10 @@ jobs:
           ninja -C out/android_arm64_release pdfium
           echo "✅ Build finished."
 
-      - name: 📂 List build output directory
+      - name: 📁 Rename .so output
         run: |
-          echo "📂 Listing contents of out/android_arm64_release..."
-          cd pdfium/out/android_arm64_release
-          ls -lh
+          echo "🔧 Renaming libpdfium.cr.so to libpdfium.so..."
+          cp pdfium/out/android_arm64_release/libpdfium.cr.so pdfium/out/android_arm64_release/libpdfium.so
 
       - name: 📦 Zip libpdfium.so
         run: |
@@ -93,8 +90,27 @@ jobs:
           zip libpdfium-android-arm64.zip libpdfium.so
           echo "✅ Created libpdfium-android-arm64.zip."
 
-      - name: ☁️ Upload zipped libpdfium
+      - name: ☁️ Upload libpdfium artifact
         uses: actions/upload-artifact@v4
         with:
           name: libpdfium-android-arm64
           path: pdfium/out/android_arm64_release/libpdfium-android-arm64.zip
+
+      - name: 📁 Collect public headers
+        run: |
+          echo "📥 Collecting public headers from pdfium/public/..."
+          mkdir -p headers
+          cp -r pdfium/public/* headers/
+          echo "✅ Copied headers to ./headers/"
+
+      - name: 📦 Zip headers
+        run: |
+          echo "📦 Creating zip archive of headers..."
+          zip -r pdfium-public-headers.zip headers
+          echo "✅ Created pdfium-public-headers.zip"
+
+      - name: ☁️ Upload PDFium public headers
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdfium-public-headers
+          path: pdfium-public-headers.zip
