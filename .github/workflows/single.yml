@@ -1,0 +1,60 @@
+name: Build Pdfium for Android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      DEPOT_TOOLS_DIR: ${{ github.workspace }}/depot_tools
+      ANDROID_NDK_ROOT: ${{ github.workspace }}/android-ndk-r23b
+
+    steps:
+      - name: Checkout (empty repo to use Actions)
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git python3 python-is-python3 build-essential curl unzip
+
+      - name: Clone depot_tools
+        run: |
+          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git $DEPOT_TOOLS_DIR
+          echo "$DEPOT_TOOLS_DIR" >> $GITHUB_PATH
+
+      - name: Fetch Pdfium
+        run: |
+          mkdir pdfium && cd pdfium
+          fetch pdfium
+          gclient sync
+
+      - name: Download Android NDK
+        run: |
+          cd ${{ github.workspace }}
+          curl -O https://dl.google.com/android/repository/android-ndk-r23b-linux.zip
+          unzip android-ndk-r23b-linux.zip
+
+      - name: Generate build files (arm64)
+        run: |
+          cd pdfium
+          gn gen out/android-arm64 --args='
+            target_os="android"
+            target_cpu="arm64"
+            is_debug=false
+            android_ndk_root="${ANDROID_NDK_ROOT}"
+            android_ndk_version="r23b"
+          '
+
+      - name: Build Pdfium
+        run: |
+          cd pdfium
+          ninja -C out/android-arm64 pdfium
+
+      - name: Archive output
+        uses: actions/upload-artifact@v3
+        with:
+          name: libpdfium-android-arm64
+          path: pdfium/out/android-arm64/libpdfium.so
