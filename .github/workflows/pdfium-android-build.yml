@@ -8,8 +8,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 40
 
-    env:
-      ANDROID_NDK_VERSION: 29.0.13113456
+    env:ssssss
       BUILD_ARCHS: "arm arm64 x86 x64"
 
     steps:
@@ -71,7 +70,7 @@ jobs:
               target_cpu="'$ARCH'"
               is_debug=false
               pdf_is_standalone=true
-              is_component_build=true
+              is_component_build=false
               pdf_enable_v8=false
               pdf_enable_xfa=false
               use_goma=false
@@ -88,12 +87,47 @@ jobs:
             echo "📦 Zipping libpdfium.so for $ARCH..."
             zip -j "$BUILD_DIR/libpdfium-android-${ARCH}.zip" "$BUILD_DIR/libpdfium.so"
 
-            echo "☁️ Uploading libpdfium artifact for $ARCH..."
-            gh_path="$BUILD_DIR/libpdfium-android-${ARCH}.zip"
-            echo "::set-output name=artifact_path_$ARCH::$gh_path"
-
             cd ..
           done
+
+      - name: ✅ Validate that libpdfium.so exists for all ABIs
+        run: |
+          echo "🔍 Verifying .so files..."
+          for ARCH in $BUILD_ARCHS; do
+            FILE="pdfium/out/android_${ARCH}_release/libpdfium.so"
+            if [ -f "$FILE" ]; then
+              echo "✅ Found: $FILE"
+            else
+              echo "❌ Missing: $FILE"
+              exit 1
+            fi
+          done
+
+      - name: 📦 Bundle all libpdfium.so files into one zip
+        run: |
+          echo "📦 Creating combined zip for all ABIs..."
+          mkdir -p bundled-libs
+
+          for ARCH in $BUILD_ARCHS; do
+            case "$ARCH" in
+              arm) ABI_DIR="armeabi-v7a" ;;
+              arm64) ABI_DIR="arm64-v8a" ;;
+              x86) ABI_DIR="x86" ;;
+              x64) ABI_DIR="x86_64" ;;
+            esac
+
+            mkdir -p "bundled-libs/$ABI_DIR"
+            cp "pdfium/out/android_${ARCH}_release/libpdfium.so" "bundled-libs/$ABI_DIR/libpdfium.so"
+          done
+
+          zip -r libpdfium-android-all.zip bundled-libs
+          echo "✅ Created libpdfium-android-all.zip"
+
+      - name: ☁️ Upload bundled libpdfium for all ABIs
+        uses: actions/upload-artifact@v4
+        with:
+          name: libpdfium-android-all
+          path: libpdfium-android-all.zip
 
       - name: 📁 Collect public headers
         run: |
@@ -113,13 +147,3 @@ jobs:
         with:
           name: pdfium-public-headers
           path: pdfium-public-headers.zip
-
-      - name: ☁️ Upload libpdfium artifacts per ABI
-        uses: actions/upload-artifact@v4
-        with:
-          name: libpdfium-all-abis
-          path: |
-            pdfium/out/android_arm_release/libpdfium-android-arm.zip
-            pdfium/out/android_arm64_release/libpdfium-android-arm64.zip
-            pdfium/out/android_x86_release/libpdfium-android-x86.zip
-            pdfium/out/android_x64_release/libpdfium-android-x64.zip
